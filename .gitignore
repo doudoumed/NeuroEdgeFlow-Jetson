@@ -1,0 +1,25 @@
+# Media and logs
+*.jpg
+*.mp4
+*.ogv
+*.log
+*.csv
+# Compiled models, binaries, and caches
+*.engine
+*.whl
+*.deb
+__pycache__/
+# Ignore default Ubuntu directories and potential external repos
+Desktop/
+Documents/
+Downloads/
+Music/
+Pictures/
+Public/
+Templates/
+Videos/
+onnx/
+yolov5/
+DeepStream-Yolo/
+torchvision/
+go/
