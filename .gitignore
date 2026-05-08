@@ -1,25 +1,30 @@
-# Media and logs
-*.jpg
-*.mp4
-*.ogv
+# ملفات نظام Jetson أو بيئة التطوير
+__pycache__/
+*.pyc
+*.pyo
 *.log
-*.csv
-# Compiled models, binaries, and caches
-*.engine
 *.whl
 *.deb
-__pycache__/
-# Ignore default Ubuntu directories and potential external repos
-Desktop/
-Documents/
-Downloads/
-Music/
+*.mp4
+*.ogv
+*.jpg
+*.png
+*.avi
+*.gif
+*.tar
+*.tar.gz
+*.zip
+
+# مجلدات كبيرة لا تحتاج للرفع
+torch-1.*.whl
+vscode.deb
+Videos/
 Pictures/
+Music/
 Public/
 Templates/
-Videos/
-onnx/
 yolov5/
+onnx/
 DeepStream-Yolo/
-torchvision/
+neuroedgeflow/
 go/
