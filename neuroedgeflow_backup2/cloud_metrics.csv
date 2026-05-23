@@ -1,0 +1,1 @@
+timestamp,frame_id,mode,frame_size_kb,encode_ms,grpc_ms,inference_ms,decode_ms,total_ms,num_detections,fps
