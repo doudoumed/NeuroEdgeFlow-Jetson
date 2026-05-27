@@ -20,7 +20,7 @@ import time
 import requests
 
 PROXY_PORT       = 5000
-JPEG_QUALITY     = 85
+JPEG_QUALITY     = 50
 REQUEST_TIMEOUT  = 10
 
 

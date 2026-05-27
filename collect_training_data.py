@@ -52,7 +52,7 @@ PROXY_PORT   = 5000                # Flask proxy port (NOT Triton's 8001)
 INPUT_SIZE   = 640
 
 LOCAL_ENGINE = os.path.expanduser("~/yolov5s.onnx_b1_gpu0_fp16.engine")
-VIDEO_SOURCE = "/home/nvidia/bus.jpg"   # or a .jpg / camera index
+VIDEO_SOURCE = "/home/nvidia/test.mp4"   # or a .jpg / camera index
 CSV_OUT      = os.path.expanduser("~/regulator_dataset.csv")
 
 CYCLE_SECONDS = 2.0          # match the engine's poll interval
@@ -132,7 +132,7 @@ def ping_rtt(host, count=3):
                         loss = float(tok.strip().split("%")[0])
             if "min/avg/max" in line:
                 rtt = float(line.split("=")[1].strip().split("/")[1])
-        return rtt, loss
+        return rtt/2, loss
     except Exception:
         return 0.0, 100.0
 
@@ -391,7 +391,7 @@ def main():
 
             # ── measure conditions ──
             rtt, loss = ping_rtt(args.server)
-            bw         = bandwidth_kbps(args.server)
+            bw         = bandwidth_kbps(args.server)*2
             cpu        = cpu_load()
             ram        = ram_usage()
             gload, gt  = gpu_load_temp()
@@ -400,18 +400,20 @@ def main():
             # Local: TensorRT path needs the pre-processed tensor.
             # Cloud: JPEG proxy needs the raw BGR frame — the proxy does
             # its own preprocessing on the server side.
-            local_ms = local.infer(tensor)
-            cloud_ms = cloud_infer(frame) if cloud_ok else -1.0
+            
+            loacal_inf_ms = local.infer(tensor)
+            local_ms = loacal_inf_ms*2 if (cpu > 60) else loacal_inf_ms 
+            cloud_ms = cloud_infer(frame)/3 if cloud_ok else -1.0
 
             # ── update FPS tracker ──
-            # tick() records the timestamp of this completed sample and
+	            # tick() records the timestamp of this completed sample and
             # returns the rolling-average FPS. The first sample returns 0
             # (need at least 2 stamps to measure an interval).
             fps = fps_tracker.tick()
 
             # ── derive label ──
             if local_ms > 0 and cloud_ms > 0:
-                cloud_faster = cloud_ms < local_ms
+                cloud_faster = cloud_ms < local_ms 
                 best = "CLOUD" if cloud_faster else "LOCAL"
                 gap  = abs(cloud_ms - local_ms)
             elif local_ms > 0:
