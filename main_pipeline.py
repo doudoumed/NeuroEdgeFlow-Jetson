@@ -63,6 +63,15 @@ from adaptive_engine import (AdaptiveEngine, InferenceMode, HYSTERESIS_COUNT,
 # edge_pipeline provides run_one_frame() for LOCAL mode
 import edge_pipeline
 
+# Prometheus exporter (Sprint 4 hardware + Sprint 5 inference mode).
+# Imported here so main_pipeline.py owns its lifecycle — no separate
+# service to launch. If the module isn't present we just skip exporting.
+try:
+    import jetson_exporter
+    EXPORTER_AVAILABLE = True
+except ImportError:
+    EXPORTER_AVAILABLE = False
+
 # ---------------------------------------------------------------------------
 # HTTP proxy client — no external dependencies
 # ---------------------------------------------------------------------------
@@ -94,7 +103,7 @@ CAM_FPS          = 30
 #   0 = default camera
 #   "path/to/video.mp4" = video file
 #   "path/to/image.jpg" = image loop (Task 02 fallback)
-VIDEO_SOURCE     = "/home/nvidia/yolov5/data/images/bus.jpg"
+VIDEO_SOURCE     = "/home/nvidia/bus.jpg"
 
 # Queue — maxsize=2 so capture stays 1 frame ahead of inference maximum.
 # If inference is slow the oldest frame is dropped rather than blocking capture.
@@ -563,6 +572,18 @@ class AdaptivePipeline(object):
     def start(self):
         log.info("=== AdaptivePipeline starting ===")
 
+        # Launch the Prometheus exporter once, here, so Grafana sees the
+        # /metrics endpoint coming up at pipeline startup rather than as
+        # a separate service. Wrapped in try/except so a port collision
+        # or other startup issue cannot prevent the engine from starting.
+        if EXPORTER_AVAILABLE:
+            try:
+                jetson_exporter.start()
+                log.info("jetson_exporter started on port %d",
+                         jetson_exporter.PROMETHEUS_PORT)
+            except Exception as exc:
+                log.warning("jetson_exporter.start() failed: %s", exc)
+
         # Start engine (control loop thread + network_monitor)
         self._engine.start()
         log.info("Engine started — initial mode: %s", self._engine.current_mode)
@@ -684,6 +705,17 @@ class AdaptivePipeline(object):
 
             total_ms = (time.time() - t_frame_start) * 1000.0
             fps      = self._fps_tracker.update()
+
+            # Push live metric updates to the exporter so the Grafana
+            # "Inference Mode" stat and the timeline panel refresh at
+            # frame rate. The exporter's own 2 s hardware loop is too
+            # slow to track the engine's per-frame switches.
+            if EXPORTER_AVAILABLE:
+                try:
+                    jetson_exporter.set_inference_mode(mode)
+                    jetson_exporter.set_fps(fps)
+                except Exception:
+                    pass   # never let a metric push stall inference
 
             # ── 4. DRAW ──────────────────────────────────────────────────────
             display = _draw(

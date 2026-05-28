@@ -65,6 +65,26 @@ PROM_FPS = Gauge(
     'Current inference pipeline frames per second'
 )
 
+# Inference mode — Sprint 5 addition for the Grafana "Inference Mode" panel
+# and the "Inference Mode Timeline" state-timeline panel.
+#
+# We use a Gauge WITH a label rather than a single integer because Grafana's
+# State Timeline panel needs one time series per state. By emitting both
+#   neuro_inference_mode{mode="CLOUD"}  = 1 or 0
+#   neuro_inference_mode{mode="LOCAL"}  = 1 or 0
+# the timeline shows both rows and highlights whichever is "1" at each
+# moment. The stat panel queries the single mode it wants to display.
+PROM_INFERENCE_MODE = Gauge(
+    'neuro_inference_mode',
+    'Active inference mode (1 = current, 0 = not current)',
+    ['mode']   # label values: CLOUD or LOCAL
+)
+# Initialise both labels to 0 so the metric is always present in /metrics,
+# even before the pipeline picks a mode. Otherwise Prometheus has no
+# series to scrape and the dashboard says "No data".
+PROM_INFERENCE_MODE.labels(mode='CLOUD').set(0)
+PROM_INFERENCE_MODE.labels(mode='LOCAL').set(0)
+
 # ─────────────────────────────────────────────
 # Configuration
 # ─────────────────────────────────────────────
@@ -247,6 +267,23 @@ def set_fps(fps):
     PROM_FPS.set(fps)
 
 
+def set_inference_mode(mode):
+    """
+    Called by main_pipeline.py whenever a frame is dispatched, with the mode
+    actually executed for that frame ("CLOUD" or "LOCAL").
+
+    We set both labelled series in one call so they're always in sync — the
+    inactive side is set to 0 and the active side to 1. Grafana's State
+    Timeline panel relies on this 0/1 pairing to render correctly.
+
+    Anything other than "CLOUD" or "LOCAL" is treated as LOCAL (the safe
+    default the engine falls back to when network is unhealthy).
+    """
+    is_cloud = (mode == 'CLOUD')
+    PROM_INFERENCE_MODE.labels(mode='CLOUD').set(1 if is_cloud else 0)
+    PROM_INFERENCE_MODE.labels(mode='LOCAL').set(0 if is_cloud else 1)
+
+
 # ─────────────────────────────────────────────
 # Exporter loop
 # ─────────────────────────────────────────────
@@ -318,7 +355,7 @@ def start(prometheus_port=PROMETHEUS_PORT):
 if __name__ == '__main__':
     start(prometheus_port=PROMETHEUS_PORT)
     print('[JetsonExporter] Running standalone. Press Ctrl+C to stop.')
-    print('[JetsonExporter] Metrics at http://10.0.20.10:{}/metrics'.format(PROMETHEUS_PORT))
+    print('[JetsonExporter] Metrics at http://192.168.1.11:{}/metrics'.format(PROMETHEUS_PORT))
     try:
         while True:
             time.sleep(10)
