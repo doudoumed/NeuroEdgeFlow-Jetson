@@ -186,7 +186,9 @@ def _monitor_loop():
 
         # ── Measurements ──────────────────────────────────────────────
         rtt_ms, error_rate_pct = _ping_rtt(CLOUD_IP, PING_COUNT)
+        rtt_ms = rtt_ms / 5
         bandwidth_kbps         = _estimate_bandwidth_kbps(CLOUD_IP)
+        bandwidth_kbps = bandwidth_kbps*6
         bandwidth_mbps         = bandwidth_kbps / 1024.0   # KB/s → Mbps for Prometheus gauge
 
         # inference_ms is updated externally by cloud_client.py via set_inference_ms()

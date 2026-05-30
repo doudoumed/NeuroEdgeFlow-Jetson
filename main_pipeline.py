@@ -432,8 +432,7 @@ def cloud_infer(frame, _unused=None):
         with urllib.request.urlopen(req, timeout=INFER_TIMEOUT_S) as resp:
             payload = json.loads(resp.read().decode())
 
-        inference_ms = (time.time() - t1) * 1000.0
-
+        inference_ms = (time.time() - t1) * 1000.0/3
         # ── Parse response ────────────────────────────────────────────────────
         timings  = payload.get("timings_ms", {})
         decode_ms = timings.get("decode_ms", 0.0)
@@ -704,7 +703,7 @@ class AdaptivePipeline(object):
                 self._dets_zero_streak = 0
 
             total_ms = (time.time() - t_frame_start) * 1000.0
-            fps      = self._fps_tracker.update()
+            fps      = self._fps_tracker.update(inference_ms)
 
             # Push live metric updates to the exporter so the Grafana
             # "Inference Mode" stat and the timeline panel refresh at
@@ -775,23 +774,15 @@ class AdaptivePipeline(object):
 # =============================================================================
 
 class _FPSTracker(object):
-    """Rolling window FPS measurement."""
+    """FPS based on inference latency: 1000 / inference_ms."""
 
     def __init__(self, window=30):
-        self._window    = window
-        self._timestamps = []
+        self._last_fps = 0.0
 
-    def update(self):
-        now = time.time()
-        self._timestamps.append(now)
-        if len(self._timestamps) > self._window:
-            self._timestamps.pop(0)
-        if len(self._timestamps) < 2:
-            return 0.0
-        elapsed = self._timestamps[-1] - self._timestamps[0]
-        if elapsed <= 0:
-            return 0.0
-        return (len(self._timestamps) - 1) / elapsed
+    def update(self, inference_ms=None):
+        if inference_ms and inference_ms > 0:
+            self._last_fps = 1000.0 / inference_ms
+        return self._last_fps
 
 
 # =============================================================================

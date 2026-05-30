@@ -1,0 +1,9 @@
+{
+  "objective": "binary:logistic",
+  "n_estimators": 200,
+  "classes": [
+    0,
+    1
+  ],
+  "best_iteration": null
+}

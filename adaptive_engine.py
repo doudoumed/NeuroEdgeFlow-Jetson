@@ -44,7 +44,7 @@ except ImportError:
     logging.warning("jetson_exporter.py not found — set_fps() calls will be skipped")
 
 try:
-    from rule_regulator import RuleBasedRegulator as NeuralOffloadingRegulator
+    from xgboost_regulator import RuleBasedRegulator as NeuralOffloadingRegulator
     NEURAL_REGULATOR_AVAILABLE = True
 except ImportError:
     NEURAL_REGULATOR_AVAILABLE = False

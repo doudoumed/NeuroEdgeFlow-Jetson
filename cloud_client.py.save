@@ -302,9 +302,10 @@ def main():
             gpu, gpu_t = gpu_load_temp()
  
             # ALWAYS send to cloud — that's the whole point of this baseline
-            cloud_ms = cloud_infer_jpeg(args.server, frame, port=args.port)/ 9.0
+            cloud_ms = cloud_infer_jpeg(args.server, frame, port=args.port)
  
-            if cloud_ms > 0:
+            if 
+cloud_ms > 0:
                 cloud_ok = 1
                 success_count += 1
             else:
