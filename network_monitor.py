@@ -60,7 +60,7 @@ PROM_ERROR_RATE = Gauge(
 # Configuration
 # ─────────────────────────────────────────────
 
-CLOUD_IP         = '10.0.20.10'   # Laptop running Triton
+CLOUD_IP         = '10.0.20.10'   # Server running Triton
 PING_COUNT       = 4                # Pings per measurement cycle
 MONITOR_INTERVAL = 2.0              # Seconds between measurements (matches Sprint 5 decision cycle)
 CSV_LOG_PATH     = os.path.expanduser('~/network_monitor.csv')
@@ -186,9 +186,9 @@ def _monitor_loop():
 
         # ── Measurements ──────────────────────────────────────────────
         rtt_ms, error_rate_pct = _ping_rtt(CLOUD_IP, PING_COUNT)
-        rtt_ms = rtt_ms / 5
+        rtt_ms = rtt_ms 
         bandwidth_kbps         = _estimate_bandwidth_kbps(CLOUD_IP)
-        bandwidth_kbps = bandwidth_kbps*6
+        bandwidth_kbps = bandwidth_kbps
         bandwidth_mbps         = bandwidth_kbps / 1024.0   # KB/s → Mbps for Prometheus gauge
 
         # inference_ms is updated externally by cloud_client.py via set_inference_ms()

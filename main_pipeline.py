@@ -432,7 +432,7 @@ def cloud_infer(frame, _unused=None):
         with urllib.request.urlopen(req, timeout=INFER_TIMEOUT_S) as resp:
             payload = json.loads(resp.read().decode())
 
-        inference_ms = (time.time() - t1) * 1000.0/3
+        inference_ms = (time.time() - t1) * 1000.0
         # ── Parse response ────────────────────────────────────────────────────
         timings  = payload.get("timings_ms", {})
         decode_ms = timings.get("decode_ms", 0.0)

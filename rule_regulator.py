@@ -71,7 +71,7 @@ BW_MIN_KBPS              = 100.0   # bandwidth below this is starvation
 # inference latency can double.
 GPU_OFFLOAD_THRESHOLD    = 70.0    # GPU load above this -> offload to cloud
 GPU_THERMAL_THRESHOLD    = 75.0    # GPU temp above this -> thermal risk
-CPU_OFFLOAD_THRESHOLD    = 85.0    # safety net for runaway CPU; rarely fires
+CPU_OFFLOAD_THRESHOLD    = 60.0    # safety net for runaway CPU; rarely fires
 
 # Latency comparison
 # Cloud must beat local by MORE than this margin to win — otherwise the
